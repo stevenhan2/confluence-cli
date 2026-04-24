@@ -890,6 +890,46 @@ describe('ConfluenceClient', () => {
     });
   });
 
+  describe('marker conventions', () => {
+    test('TOC marker becomes Table of Contents macro', () => {
+      const result = client.markdownToStorage('**TOC**');
+      expect(result).toContain('<ac:structured-macro ac:name="toc"');
+    });
+
+    test('ANCHOR marker becomes anchor macro', () => {
+      const result = client.markdownToStorage('**ANCHOR: my-section**');
+      expect(result).toContain('<ac:structured-macro ac:name="anchor">');
+      expect(result).toContain('<ac:parameter ac:name="">my-section</ac:parameter>');
+    });
+
+    test('same-page #id link becomes ac:link with ac:anchor', () => {
+      const result = client.markdownToStorage('[Jump](#my-section)');
+      expect(result).toContain('<ac:link ac:anchor="my-section">');
+      expect(result).toContain('<![CDATA[Jump]]>');
+    });
+
+    test('anchor links and external links coexist', () => {
+      const result = client.markdownToStorage(
+        '[Jump](#my-section) and [External](https://example.com)'
+      );
+      expect(result).toContain('ac:anchor="my-section"');
+      expect(result).toContain('data-card-appearance="inline"');
+    });
+
+    test('QUOTE marker preserves blockquote instead of info macro', () => {
+      const result = client.markdownToStorage('> **QUOTE**\n> Famous words.');
+      expect(result).toContain('<blockquote>');
+      expect(result).toContain('Famous words.');
+      expect(result).not.toContain('ac:name="info"');
+    });
+
+    test('unmarked blockquote still defaults to info macro', () => {
+      const result = client.markdownToStorage('> Just a quote');
+      expect(result).toContain('<ac:structured-macro ac:name="info">');
+      expect(result).toContain('Just a quote');
+    });
+  });
+
   describe('forceCloud', () => {
     test('isCloud returns false for custom domains without forceCloud', () => {
       const customClient = new ConfluenceClient({
