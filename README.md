@@ -249,6 +249,8 @@ Or add `"forceCloud": true` to your profile in `~/.confluence-cli/config.json`:
 }
 ```
 
+**Link format** (`linkStyle`): controls how markdown links are rendered in Confluence storage. Explicit values: `smart` (Cloud smart links with inline card), `plain` (simple `<a href>`), `wiki` (Server/DC `ac:link`). When unset, the default follows the instance type — `smart` for `*.atlassian.net`, `plain` when `forceCloud` is set (custom-domain Cloud instances can hit "Cannot handle: DefaultLink" errors with smart links), and `wiki` for Server/Data Center. Override via `CONFLUENCE_LINK_STYLE` or a `"linkStyle"` profile key.
+
 **Read-only mode** (recommended for AI agents):
 ```bash
 export CONFLUENCE_READ_ONLY=true

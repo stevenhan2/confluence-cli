@@ -791,7 +791,7 @@ describe('ConfluenceClient', () => {
       expect(result).not.toContain('data-card-appearance');
     });
 
-    test('should convert links to smart link format when forceCloud is set on a custom domain', () => {
+    test('should use plain links by default when forceCloud is set on a custom domain', () => {
       const customDomainClient = new ConfluenceClient({
         domain: 'wiki.example.org',
         token: 'test-token',
@@ -800,8 +800,93 @@ describe('ConfluenceClient', () => {
       const markdown = '[Example Link](https://example.com)';
       const result = customDomainClient.markdownToStorage(markdown);
 
-      expect(result).toContain('<a href="https://example.com" data-card-appearance="inline">Example Link</a>');
+      expect(result).toContain('<a href="https://example.com">Example Link</a>');
+      expect(result).not.toContain('data-card-appearance');
       expect(result).not.toContain('<ac:link>');
+    });
+  });
+
+  describe('linkStyle', () => {
+    test('defaults to "smart" for atlassian.net Cloud', () => {
+      const cloudClient = new ConfluenceClient({
+        domain: 'company.atlassian.net',
+        token: 'test-token'
+      });
+      expect(cloudClient.linkStyle).toBe('smart');
+    });
+
+    test('defaults to "plain" when forceCloud is set', () => {
+      const customClient = new ConfluenceClient({
+        domain: 'wiki.example.org',
+        token: 'test-token',
+        forceCloud: true
+      });
+      expect(customClient.linkStyle).toBe('plain');
+    });
+
+    test('defaults to "wiki" for Server/Data Center', () => {
+      const serverClient = new ConfluenceClient({
+        domain: 'confluence.example.com',
+        token: 'test-token'
+      });
+      expect(serverClient.linkStyle).toBe('wiki');
+    });
+
+    test('defaults to "smart" when apiPath alone signals scoped-token Cloud', () => {
+      const scopedClient = new ConfluenceClient({
+        domain: 'custom.example.com',
+        token: 'test-token',
+        apiPath: '/ex/confluence/abc-123/wiki/rest/api'
+      });
+      expect(scopedClient.linkStyle).toBe('smart');
+    });
+
+    test('explicit linkStyle overrides auto-detection', () => {
+      const client = new ConfluenceClient({
+        domain: 'company.atlassian.net',
+        token: 'test-token',
+        linkStyle: 'plain'
+      });
+      expect(client.linkStyle).toBe('plain');
+      const markdown = '[Link](https://example.com)';
+      const result = client.markdownToStorage(markdown);
+      expect(result).toContain('<a href="https://example.com">Link</a>');
+      expect(result).not.toContain('data-card-appearance');
+    });
+
+    test('explicit linkStyle "smart" on forceCloud produces smart links', () => {
+      const client = new ConfluenceClient({
+        domain: 'wiki.example.org',
+        token: 'test-token',
+        forceCloud: true,
+        linkStyle: 'smart'
+      });
+      expect(client.linkStyle).toBe('smart');
+      const markdown = '[Link](https://example.com)';
+      const result = client.markdownToStorage(markdown);
+      expect(result).toContain('data-card-appearance="inline"');
+    });
+
+    test('explicit linkStyle "wiki" forces ac:link format', () => {
+      const client = new ConfluenceClient({
+        domain: 'company.atlassian.net',
+        token: 'test-token',
+        linkStyle: 'wiki'
+      });
+      expect(client.linkStyle).toBe('wiki');
+      const markdown = '[Link](https://example.com)';
+      const result = client.markdownToStorage(markdown);
+      expect(result).toContain('<ac:link>');
+      expect(result).not.toContain('data-card-appearance');
+    });
+
+    test('invalid linkStyle falls back to auto-detection', () => {
+      const client = new ConfluenceClient({
+        domain: 'company.atlassian.net',
+        token: 'test-token',
+        linkStyle: 'invalid'
+      });
+      expect(client.linkStyle).toBe('smart');
     });
   });
 

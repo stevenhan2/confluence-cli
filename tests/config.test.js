@@ -7,6 +7,7 @@ const ENV_KEYS = [
   'CONFLUENCE_EMAIL', 'CONFLUENCE_USERNAME',
   'CONFLUENCE_AUTH_TYPE', 'CONFLUENCE_API_PATH',
   'CONFLUENCE_PROTOCOL', 'CONFLUENCE_FORCE_CLOUD',
+  'CONFLUENCE_LINK_STYLE',
   'CONFLUENCE_COOKIE',
   'CONFLUENCE_TLS_CA_CERT', 'CONFLUENCE_TLS_CLIENT_CERT', 'CONFLUENCE_TLS_CLIENT_KEY'
 ];
@@ -121,6 +122,23 @@ describe('getConfig env var aliases', () => {
 
     const config = getConfig();
     expect(config.forceCloud).toBe(false);
+  });
+
+  test('CONFLUENCE_LINK_STYLE sets linkStyle in config', () => {
+    process.env.CONFLUENCE_DOMAIN = 'wiki.example.org';
+    process.env.CONFLUENCE_API_TOKEN = 'token';
+    process.env.CONFLUENCE_LINK_STYLE = 'plain';
+
+    const config = getConfig();
+    expect(config.linkStyle).toBe('plain');
+  });
+
+  test('linkStyle is undefined when CONFLUENCE_LINK_STYLE is not set', () => {
+    process.env.CONFLUENCE_DOMAIN = 'wiki.example.org';
+    process.env.CONFLUENCE_API_TOKEN = 'token';
+
+    const config = getConfig();
+    expect(config.linkStyle).toBeUndefined();
   });
 
   test('CONFLUENCE_COOKIE with AUTH_TYPE=cookie sets cookie auth', () => {
